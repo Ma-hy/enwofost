@@ -1,0 +1,6 @@
+pcse
+numpy 
+gdal
+netCDF4
+cdsapi
+scipy

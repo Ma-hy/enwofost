@@ -1,0 +1,13 @@
+Version: 1.0
+AgroManagement:
+- 2008-10-12:
+    CropCalendar:
+        crop_name: 'winter-wheat'
+        variety_name: 'Shenzhou_wheat'
+        crop_start_date: 2008-10-12
+        crop_start_type: sowing
+        crop_end_date: 2009-06-30
+        crop_end_type: harvest
+        max_duration: 300
+    TimedEvents: null
+    StateEvents: null
