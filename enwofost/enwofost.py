@@ -222,7 +222,7 @@ def define_prior_distributions(chunk=data_dir+"par_prior.csv"):
 
 def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
                     end = None, en_size = 3, prior_file = data_dir+"par_prior.csv", 
-                    weather_type = "NASA", weather_path = None, out_en_file = data_dir+"WOFOST_par_ensemble.npy"):
+                    weather_type = "NASA", weather_path = None, out_en_file = data_dir+"WOFOST_par_ensemble.npy", data_dir=None):
     """
     This is a function to generate a emsemble of WOFOST paramters and corresponding output.
     you need to specify Longitude (lon), Latitude (lat), 
@@ -230,7 +230,11 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
     emsemble size (en_size), configuration file for prior distributions of pramaters (prior_file), 
     weather driver dataset type (weather_type), it's set to NASA Power dataset "NASA" by default,
     you could use ERA5 "ERA5" instead or use your own CABO file (%your_cabo_files_name%).)
-    """    
+    """
+    if data_dir is None:
+        home = os.path.dirname(os.path.realpath("__file__"))
+        data_dir = home+"/data/"
+        
     if lat < -90 or lat > 90:
         msg = "Latitude should be between -90 and 90 degrees."
         raise ValueError(msg)
