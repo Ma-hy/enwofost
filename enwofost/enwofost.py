@@ -52,7 +52,8 @@ def retrieve_pixel_value(geo_coord, data_source):
 
     return data[row][col]
     
-def gen_era_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir):
+def gen_era_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir,
+                 data_dir=None):
     size = 0.25
     station_number=1
     site="%5.2f_%5.2f"%(int((mylon+size/2.)/size)*size,int((mylat+size/2.)/size)*size)
@@ -235,6 +236,7 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
         home = os.path.dirname(os.path.realpath("__file__"))
         data_dir = home+"/data/"
         
+    
     if lat < -90 or lat > 90:
         msg = "Latitude should be between -90 and 90 degrees."
         raise ValueError(msg)
@@ -254,7 +256,8 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
         if  weather_path is None or not os.path.isdir(weather_path):
             msg = "Please provide a valid path for weahter driver data."
             raise ValueError(msg)
-        gen_era_cabo(lat, lon, start.year, end.year, inputfile=weather_path)
+        gen_era_cabo(lat, lon, start.year, end.year, inputfile=weather_path, 
+                     data_dir=data_dir)
         size = 0.25
         weather_name = "%5.2f_%5.2f"%(int((lon+size/2.)/size)*size,int((lat+size/2.)/size)*size)
         weather = CABOWeatherDataProvider(weather_name, fpath=weather_path)
@@ -264,8 +267,8 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
         weather = CABOWeatherDataProvider(weather_type, fpath=weather_path)
         
         
-    home = os.path.dirname(os.path.realpath("__file__"))
-    data_dir = home+"/data/"
+    #home = os.path.dirname(os.path.realpath("__file__"))
+    #data_dir = home+"/data/"
     varnames = ["day", "TAGP", "LAI", "TWSO","DVS"]
     tmp={}
     
