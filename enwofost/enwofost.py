@@ -115,13 +115,11 @@ def gen_era_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir,
                                 '18:00','19:00','20:00',
                                 '21:00','22:00','23:00'
                             ],
-                            'area' : "%d/%d/%d/%d"%(int(mylat+1),int(mylon),int(mylat),int(mylon+1)),
+                            'area' : "%d/%d/%d/%d"%(int(mylat/10.+1.)*10,int(mylon/10.)*10,int(mylat/10.)*10,int(mylon/10.+1.)*10,),
                             'format':'netcdf'
                         },
                         fname)
-    #             print(fname)
-    #             raise Exception("Wrong data source! Pleasefname) check it.%s"%
-            print(fname)
+            print("Generating cabo format weather driver from a ERA5 NetCDF file: "fname)
             dataset=Dataset(fname)
             for par in parnames:    
                 createVar[par]=dataset.variables[par][:]
@@ -267,8 +265,6 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
         weather = CABOWeatherDataProvider(weather_type, fpath=weather_path)
         
         
-    #home = os.path.dirname(os.path.realpath("__file__"))
-    #data_dir = home+"/data/"
     varnames = ["day", "TAGP", "LAI", "TWSO","DVS"]
     tmp={}
     
@@ -284,8 +280,6 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
     agromanagement[0][start]=agromanagement[0].pop(key)
     value['CropCalendar']['crop_start_date']=start
     value['CropCalendar']['crop_end_date']=end
-    
-    #wdp = NASAPowerWeatherDataProvider(latitude=lat, longitude=lon,force_update=True)    
        
     prior_dist, prior_list, param_xvalue,param_type = define_prior_distributions(chunk=prior_file)
     z_start = np.empty((len(prior_list), en_size))
