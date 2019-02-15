@@ -1,0 +1,3 @@
+include setup.py
+include enwofost/data/*
+include enwofost/*py
