@@ -52,7 +52,8 @@ def retrieve_pixel_value(geo_coord, data_source):
 
     return data[row][col]
     
-def gen_era_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir):
+def gen_era_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir,
+                 data_dir=None):
     size = 0.25
     station_number=1
     site="%5.2f_%5.2f"%(int((mylon+size/2.)/size)*size,int((mylat+size/2.)/size)*size)
@@ -222,7 +223,7 @@ def define_prior_distributions(chunk=data_dir+"par_prior.csv"):
 
 def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
                     end = None, en_size = 3, prior_file = data_dir+"par_prior.csv", 
-                    weather_type = "NASA", weather_path = None, out_en_file = data_dir+"WOFOST_par_ensemble.npy"):
+                    weather_type = "NASA", weather_path = None, out_en_file = data_dir+"WOFOST_par_ensemble.npy", data_dir=None):
     """
     This is a function to generate a emsemble of WOFOST paramters and corresponding output.
     you need to specify Longitude (lon), Latitude (lat), 
@@ -230,7 +231,12 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
     emsemble size (en_size), configuration file for prior distributions of pramaters (prior_file), 
     weather driver dataset type (weather_type), it's set to NASA Power dataset "NASA" by default,
     you could use ERA5 "ERA5" instead or use your own CABO file (%your_cabo_files_name%).)
-    """    
+    """
+    if data_dir is None:
+        home = os.path.dirname(os.path.realpath("__file__"))
+        data_dir = home+"/data/"
+        
+    
     if lat < -90 or lat > 90:
         msg = "Latitude should be between -90 and 90 degrees."
         raise ValueError(msg)
@@ -250,7 +256,8 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
         if  weather_path is None or not os.path.isdir(weather_path):
             msg = "Please provide a valid path for weahter driver data."
             raise ValueError(msg)
-        gen_era_cabo(lat, lon, start.year, end.year, inputfile=weather_path)
+        gen_era_cabo(lat, lon, start.year, end.year, inputfile=weather_path, 
+                     data_dir=data_dir)
         size = 0.25
         weather_name = "%5.2f_%5.2f"%(int((lon+size/2.)/size)*size,int((lat+size/2.)/size)*size)
         weather = CABOWeatherDataProvider(weather_name, fpath=weather_path)
@@ -260,8 +267,8 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
         weather = CABOWeatherDataProvider(weather_type, fpath=weather_path)
         
         
-    home = os.path.dirname(os.path.realpath("__file__"))
-    data_dir = home+"/data/"
+    #home = os.path.dirname(os.path.realpath("__file__"))
+    #data_dir = home+"/data/"
     varnames = ["day", "TAGP", "LAI", "TWSO","DVS"]
     tmp={}
     
