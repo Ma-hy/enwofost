@@ -232,12 +232,13 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
     """
     if data_dir is None:
         #home = os.path.dirname(os.path.realpath("__file__"))
-        os.path.split(os.path.realpath(__file__))[0]
+        home = os.path.split(os.path.realpath(__file__))[0] #os.path.dirname(os.path.abspath(__file__))
         data_dir = home+"/data/"
+        #print(data_dir)
     if prior_file is None:
         prior_file = data_dir+"par_prior.csv"    
     if out_en_file is None:
-        out_en_file = data_dir+"WOFOST_par_ensemble.npy"
+        out_en_file = os.path.split(os.path.realpath(__file__))[0]+"WOFOST_par_ensemble.npy"
     
     if lat < -90 or lat > 90:
         msg = "Latitude should be between -90 and 90 degrees."
