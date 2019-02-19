@@ -119,7 +119,7 @@ def gen_era_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir,
                             'format':'netcdf'
                         },
                         fname)
-            print("Generating cabo format weather driver from a ERA5 NetCDF file: "fname)
+            print("Generating cabo format weather driver from a ERA5 NetCDF file: ",fname)
             dataset=Dataset(fname)
             for par in parnames:    
                 createVar[par]=dataset.variables[par][:]
