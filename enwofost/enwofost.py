@@ -231,7 +231,8 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
     you could use ERA5 "ERA5" instead or use your own CABO file (%your_cabo_files_name%).)
     """
     if data_dir is None:
-        home = os.path.dirname(os.path.realpath("__file__"))
+        #home = os.path.dirname(os.path.realpath("__file__"))
+        os.path.split(os.path.realpath(__file__))[0]
         data_dir = home+"/data/"
     if prior_file is None:
         prior_file = data_dir+"par_prior.csv"    
