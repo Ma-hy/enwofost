@@ -220,7 +220,7 @@ def define_prior_distributions(chunk=data_dir+"par_prior.csv"):
     return prior_dist, param_list, param_xvalue,param_type
 
 def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
-                    end = None, en_size = 3, prior_file = data_dir+"par_prior.csv", 
+                    end = None, en_size = 3, prior_file = None,
                     weather_type = "NASA", weather_path = None, out_en_file = data_dir+"WOFOST_par_ensemble.npy", data_dir=None):
     """
     This is a function to generate a emsemble of WOFOST paramters and corresponding output.
@@ -233,7 +233,8 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
     if data_dir is None:
         home = os.path.dirname(os.path.realpath("__file__"))
         data_dir = home+"/data/"
-        
+    if prior_file is None:
+        prior_file = data_dir+"par_prior.csv"    
     
     if lat < -90 or lat > 90:
         msg = "Latitude should be between -90 and 90 degrees."
