@@ -183,7 +183,7 @@ def gen_era_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir,
     dataset = None    
 
 
-def define_prior_distributions(chunk=data_dir+"par_prior.csv"):
+def define_prior_distributions(chunk=data_dir+"par_prior.csv",tsum1=None,tsum2=None):
     """A function to interpret the prior distributions from an Excel c&p job.
     Returns a dictionary indexed by parameter name and a pointer to a
     scipy.stats function that provides a logpdf method ;-). It also returns a
@@ -205,6 +205,8 @@ def define_prior_distributions(chunk=data_dir+"par_prior.csv"):
                 dist = ss.uniform(xmin, (xmax - xmin))
             elif line.find("Gaussian") >= 0:
                 param,ty, xp, yp, xmin, xmax, sigma, _ = line.split(",")
+                if param =="TSUM1" and tsum1 is not None:  yp = tsum1
+                if param =="TSUM2" and tsum2 is not None:  yp = tsum2
                 if ty[0] == "X":
                     xp,yp = yp,xp
                 lower = float(xmin)
@@ -268,7 +270,10 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
         if weather_path == None:
             raise ValueError("Please provide your weather driver path!")
         weather = CABOWeatherDataProvider(weather_type, fpath=weather_path)
-        
+    
+    sdoy=retrieve_pixel_value([lon,lat],data_dir+"mean_wheat_sdoy_china_kriging_int.tif")    
+    tsum1=retrieve_pixel_value([lon,lat],data_dir+"mean_wheat_TSUM1_china_kriging.tif")  
+    tsum2=retrieve_pixel_value([lon,lat],data_dir+"TSUM2_aver_0.1deg.tif")  
         
     varnames = ["day", "TAGP", "LAI", "TWSO","DVS"]
     tmp={}
@@ -282,11 +287,12 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
     agromanagement_file = os.path.join(data_dir, 'shenzhou_wheat.amgt')
     agromanagement = YAMLAgroManagementReader(agromanagement_file)
     (key, value), = agromanagement[0].items()
-    agromanagement[0][start]=agromanagement[0].pop(key)
-    value['CropCalendar']['crop_start_date']=start
+    agromanagement[0][dt.datetime.strptime("%d%03d"%(start.year,sdoy),"%Y%j").date()]=agromanagement[0].pop(key)
+    value['CropCalendar']['crop_start_date']=dt.datetime.strptime("%d%03d"%(start.year,sdoy),"%Y%j").date()
+    print("Crop is sowed at %s"%dt.datetime.strftime(value['CropCalendar']['crop_start_date'],"%Y-%m-%d"))
     value['CropCalendar']['crop_end_date']=end
        
-    prior_dist, prior_list, param_xvalue,param_type = define_prior_distributions(chunk=prior_file)
+    prior_dist, prior_list, param_xvalue,param_type = define_prior_distributions(chunk=prior_file,tsum1=tsum1,tsum2=tsum2)
     z_start = np.empty((len(prior_list), en_size))
     for i, param in enumerate(prior_list):
         z_start[i, :] = prior_dist[param].rvs(en_size)
@@ -364,6 +370,7 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
                 raise Exception("There's something wrong with %s, please check it."%par)
         ##########################################################################
         cropdata.update(theta_dict)
+        
         parameters = ParameterProvider(cropdata=cropdata,
                                        soildata=soil,
                                        sitedata=site)
