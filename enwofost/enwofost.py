@@ -49,14 +49,111 @@ def retrieve_pixel_value(geo_coord, data_source):
     col = int((geo_coord[0] - xOrigin) / pixelWidth)
     row = int((yOrigin - geo_coord[1] ) / pixelHeight)
     dataset = None
-
+    
     return data[row][col]
+    
+def gen_tigge_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir,
+                 data_dir=None):
+    size = 0.25
+    station_number=1
+    site="TIGGE_%5.2f_%5.2f"%(int((mylon+size/2.)/size)*size,int((mylat+size/2.)/size)*size)
+    c1=-0.18
+    c2=-0.55
+
+    elev=retrieve_pixel_value([mylon,mylat],data_dir+"alwdgg.tif")
+    parnames = ["ssr","mx2t6","mn2t6","tp","u10","v10","d2m"]
+    createVar = globals()
+    
+    for year in range(start_year,end_year+1):
+        fname = inputfile+site+".%s"%(str(year)[-3:])
+        if not os.path.isfile(fname):  # if CABO weather file doesn't exist
+            fname = inputfile + "tigge_ec_%d_%d_10d_%s.nc"%(int(mylon/10.)*10,int(mylat/10.)*10,str(year))
+            if not os.path.isfile(fname):  # if NetCDF weather file doesn't exist
+                print("There's no weather driver avaliable, you need to download it.")
+                query_nc = input("Do you want to download from ECMWF? It may take more than one hour: (y/n)")
+                if query_nc == 'y'or 'Y':
+                    server = ECMWFDataServer()
+                    server.retrieve({
+                        "class": "ti",
+                        "dataset": "tigge",
+                        "date": "%d-01-01/to/%d-12-31"%(year,year),
+                        "expver": "prod",
+                        "grid": "0.25/0.25",
+                        "levtype": "sfc",
+                        "origin": "ecmf",
+                        "param": "121/122/165/166/168/176/228228",
+                        "step": "6/12/18/24",
+                        "time": "00:00:00",
+                        "type": "cf",
+                        "target": fname,
+                        'format':'netcdf',
+                        'area' : "40/110/30/120"
+                    })
+            print("Generating cabo format weather driver from a TIGGE ECMWF NetCDF file: ",fname)
+            dataset=Dataset(fname)
+            for par in parnames:    
+                createVar[par]=dataset.variables[par][:]
+            uplat, dnlat = dataset.variables["latitude"][:].max(),dataset.variables["latitude"][:].min()
+            uplon, dnlon = dataset.variables["longitude"][:].max(),dataset.variables["longitude"][:].min()
+            x=int((mylon-dnlon+size/2)/size)
+            y=int((mylat-uplat-size/2)/-size)
+            times=dataset.variables["time"]
+
+            rad = np.max(ssr.reshape(-1, 4,ssr.shape[1],ssr.shape[2]), axis=1)/1000.
+            tmax = np.max(mx2t6.reshape(-1, 4,mx2t6.shape[1],mx2t6.shape[2]), axis=1)-273.15
+            tmin = np.min(mn2t6.reshape(-1, 4,mn2t6.shape[1],mn2t6.shape[2]), axis=1)-273.15
+            prec = np.max(tp.reshape(-1, 4,tp.shape[1],tp.shape[2]), axis=1)
+            prec[prec < 0.01] = 0
+            wind_u = np.mean(u10.reshape(-1,4,u10.shape[1],u10.shape[2]),axis=1)
+            wind_v = np.mean(v10.reshape(-1,4,v10.shape[1],v10.shape[2]),axis=1)
+            wind = np.sqrt(np.square(wind_u)+np.square(wind_v))
+            hum = calculate_hum(np.mean(d2m.reshape(-1, 4,d2m.shape[1],d2m.shape[2]), axis=1))
+
+            f=open(inputfile+site+".%s"%(str(year)[-3:]),"w+")
+            print (year,"begins for site: ","%s in the year of %s"%(site,str(year)))
+            f.write("*------------------------------------------------------------*"+"\n"
+                        +'*'+"%12s"%("Country: ")+"By Coordinate"+"\n"
+                        +'*'+"%12s"%("Station: ")+"%s"%site+"\n"
+                        +'*'+"%12s"%("Year: ")+"%d"%(year)+"\n"
+                        +'*'+"%12s"%("Origin: ")+"TIGGE Forecast for ECMWF"+"\n"
+                        +'*'+"%12s"%("Author: ")+"UCL, MaHongYuan"+"\n"
+                        +'*'+"%12s"%("Longitude: ")+"%f"%(mylon)+" E"+"\n"
+                        +'*'+"%12s"%("Latitude: ")+"%f"%(mylat)+" N"+"\n"
+                        +'*'+"%12s"%("Elevation: ")+"%.2f"%(elev)+" m"+"\n"
+                        +'*'+"%12s"%("Columns: ")+"\n"
+                        +'*'+"%12s"%("======== ")+"\n"
+                        +'*'+"  station number"+"\n"
+                        +'*'+"  year"+"\n"
+                        +'*'+"  day"+"\n"
+                        +'*'+"  irradiation (kJ·m-2·d-1)"+"\n"
+                        +'*'+"  minimum temperature (degrees Celsius)"+"\n"
+                        +'*'+"  maximum temperature (degrees Celsius)"+"\n"
+                        +'*'+"  vapour pressure (kPa)"+"\n" 
+                        +'*'+"  mean wind speed (m·s-1)"+"\n" 
+                        +'*'+"  precipitation (mm·d-1)"+"\n" 
+                        +'**'+" WCCDESCRIPTION="+site+", China"+"\n" 
+                        +'**'+" WCCFORMAT=2"+"\n" 
+                        +'**'+" WCCYEARNR="+"%d"%(year)+"\n" 
+                        +"*------------------------------------------------------------*"+"\n"
+                        +"%.2f  %.2f  %.2f  %.2f  %.2f\n"%(mylon, mylat, elev, c1, c2)
+                        )
+
+            for d in range(rad.shape[0]):
+                f.write("%d"%(station_number)+"\t"+"%d"%(year)+"\t"+"%3d"%(1+d)+"\t"
+                            +"%5d"%(round(rad[d,y,x]))+"\t"
+                            +"%5.1f"%(round(tmin[d,y,x]*10)/10)+"\t"
+                            +"%5.1f"%(round(tmax[d,y,x]*10)/10)+"\t"
+                            +"%5.3f"%(round(hum[d,y,x]*1000)/1000)+"\t"
+                            +"%4.1f"%(round(wind[d,y,x]*10)/10)+"\t"
+                            +"%4.1f"%(round(prec[d,y,x]*10)/10)+"\n")
+            f.close()
+    dataset = None
     
 def gen_era_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir,
                  data_dir=None):
     size = 0.25
     station_number=1
-    site="%5.2f_%5.2f"%(int((mylon+size/2.)/size)*size,int((mylat+size/2.)/size)*size)
+    site="ERA_%5.2f_%5.2f"%(int((mylon+size/2.)/size)*size,int((mylat+size/2.)/size)*size)
     c1=-0.18
     c2=-0.55
 
@@ -230,7 +327,7 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
     start time of crop (start), end time of crop (end, 270 days duration by default),
     emsemble size (en_size), configuration file for prior distributions of pramaters (prior_file), 
     weather driver dataset type (weather_type), it's set to NASA Power dataset "NASA" by default,
-    you could use ERA5 "ERA5" instead or use your own CABO file (%your_cabo_files_name%).)
+    you could use ERA5 "ERA5" or ECMWF TIGGE "ITGEE" instead or use your own CABO file (%your_cabo_files_name%).)
     """
     if data_dir is None:
         #home = os.path.dirname(os.path.realpath("__file__"))
@@ -264,7 +361,17 @@ def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
         gen_era_cabo(lat, lon, start.year, end.year, inputfile=weather_path, 
                      data_dir=data_dir)
         size = 0.25
-        weather_name = "%5.2f_%5.2f"%(int((lon+size/2.)/size)*size,int((lat+size/2.)/size)*size)
+        weather_name = "ERA_%5.2f_%5.2f"%(int((lon+size/2.)/size)*size,int((lat+size/2.)/size)*size)
+        weather = CABOWeatherDataProvider(weather_name, fpath=weather_path)
+    elif weather_type[:5].upper() == "TIGGE":
+        print("TIGGE forecast from ECMWF used.")
+        if  weather_path is None or not os.path.isdir(weather_path):
+            msg = "Please provide a valid path for weahter driver data."
+            raise ValueError(msg)
+        gen_tigge_cabo(lat, lon, start.year, end.year, inputfile=weather_path, 
+                     data_dir=data_dir)
+        size = 0.25
+        weather_name = "TIGGE_%5.2f_%5.2f"%(int((lon+size/2.)/size)*size,int((lat+size/2.)/size)*size)
         weather = CABOWeatherDataProvider(weather_name, fpath=weather_path)
     else:
         if weather_path == None:
