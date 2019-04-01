@@ -54,6 +54,7 @@ def retrieve_pixel_value(geo_coord, data_source):
     
 def gen_tigge_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir,
                  data_dir=None):
+    from ecmwfapi import ECMWFDataServer
     size = 0.25
     station_number=1
     site="TIGGE_%5.2f_%5.2f"%(int((mylon+size/2.)/size)*size,int((mylat+size/2.)/size)*size)
