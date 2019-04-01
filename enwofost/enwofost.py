@@ -319,7 +319,7 @@ def define_prior_distributions(chunk=data_dir+"par_prior.csv",tsum1=None,tsum2=N
             param_type[param] = ty
     return prior_dist, param_list, param_xvalue,param_type
 
-def ensemble_wofost(lon = 115.55, lat=38., start = dt.date(2008,10,12),
+def ensemble_wofost(lon = 115.55, lat=38.05, start = dt.date(2008,10,12),
                     end = None, en_size = 3, prior_file = None,
                     weather_type = "NASA", weather_path = None, out_en_file = None, data_dir=None):
     """
