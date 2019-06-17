@@ -18,6 +18,7 @@ import scipy.stats as ss
 import copy
 from bisect import bisect
 from pcse.db import NASAPowerWeatherDataProvider
+from ecmwfapi import ECMWFDataServer
 
 home = os.path.dirname(os.path.realpath("__file__"))
 data_dir = home+"/data/"
@@ -146,7 +147,7 @@ def gen_tigge_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir,
                             +"%5.1f"%(round(tmax[d,y,x]*10)/10)+"\t"
                             +"%5.3f"%(round(hum[d,y,x]*1000)/1000)+"\t"
                             +"%4.1f"%(round(wind[d,y,x]*10)/10)+"\t"
-                            +"%4.1f"%(round(prec[d,y,x]*10)/10)+"\n")
+                            +"%4.1f"%(np.clip(round(prec[d,y,x]*10),0,250)/10)+"\n")
             f.close()
     dataset = None
     
@@ -275,7 +276,7 @@ def gen_era_cabo(mylat, mylon, start_year, end_year, inputfile=data_dir,
                             +"%5.1f"%(round(tmax[d,y,x]*10)/10)+"\t"
                             +"%5.3f"%(round(hum[d,y,x]*1000)/1000)+"\t"
                             +"%4.1f"%(round(wind[d,y,x]*10)/10)+"\t"
-                            +"%4.1f"%(round(prec[d,y,x]*10)/10)+"\n")
+                            +"%4.1f"%(np.clip(round(prec[d,y,x]*10),0,250)/10)+"\n")
             f.close()    
             
     dataset = None    
