@@ -9,7 +9,7 @@ from netCDF4 import Dataset,date2index
 import os.path
 import cdsapi
 from pcse.fileinput import CABOFileReader
-from pcse.base_classes import ParameterProvider
+from pcse.base import ParameterProvider
 from pcse.util import WOFOST71SiteDataProvider
 from pcse.fileinput import YAMLAgroManagementReader
 from pcse.fileinput import CABOWeatherDataProvider
